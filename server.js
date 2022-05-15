@@ -29,3 +29,28 @@ let app = http.createServer(
 ).listen(port);
 
 console.log('The server is running');
+
+
+/********************************/
+/* Set up the web socket server */
+
+const { Server } = require('socket.io');
+const io = new Server(app);
+
+io.on('connection', (socket) => {
+
+    /* Output a log message on the server and send it to the client */
+    function serverLog(...messages) {
+        io.emit('log', ['**** Message from the server:\n']);
+        messages.forEach((item) => {
+            io.emit('log', ['****\t'+item]);
+            console.log(item);
+        });
+    }
+
+    serverLog('a page connected to the server:  ' +socket.id);
+
+    socket.on('disconnect', () => {
+        serverLog('a page disconnected from the server:  '+socket.id)
+    });
+});
