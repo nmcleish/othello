@@ -43,6 +43,7 @@ function sendChatMessage() {
     request.room = chatRoom;
     request.username = username;
     request.message = $('#chatMessage').val();
+    $('#chatMessage').val('');
     console.log('**** Client log message, sending \'send_chat_message\' command: ' + JSON.stringify(request));
     socket.emit('send_chat_message', request)
 }
