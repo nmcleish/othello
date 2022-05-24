@@ -15,10 +15,15 @@
     }
 
     .headerrow {
-      background-color: paleturquoise;
+      background-color: #BDE0FE;
     }
 
-    .join_room_response {
+    #messagePane {
+      background-color: #b7b6ff;
+    }
+
+    .join_room_response,
+    .left_room_response {
       background-color: lightgray;
       margin: 1px 1px 1px 10px;
 
@@ -26,7 +31,7 @@
 
     .chat_message {
       font-size: 125%;
-      color: rgb(63, 0, 74);
+      color: black;
     }
   </style>
   <title>Reversi: Lobby</title>
@@ -36,23 +41,30 @@
   <div class="container-fluid">
     <div class="row m-4 headerrow">
       <div class="col text-center">
-        <h3>Lobby</h3>
+        <h3 id="lobbyTitle">Lobby</h3>
       </div>
     </div>
     <div class="row m-4">
       <div class="col">
-        <div class="row align-items-center justify-content-center m-5">
-          <div class="col-8">
+        <div class="row align-items-start justify-content-center">
+          <div class="col-md-4">
+            <h4>Players</h4>
+            <div id="players" class="align-items-end text-right m-3">
+            </div>
+          </div>
+          <div class="col-md-8" id="messagePane">
+            <div>
+              <h4>Messages</h4>
+            </div>
             <div class="input-group">
               <input type="text" class="form-control text-nowrap" id="chatMessage" placeholder="Enter your message"
                 aria-label="Enter your message to send to the chat room" />
               <button type="submit" class="btn btn-dark text-nowrap" id="chatButton"
                 onclick="sendChatMessage()">Send</button>
             </div>
+            <div id="messages"></div>
           </div>
         </div>
-        <h4>Messages</h4>
-        <div id="messages"></div>
       </div>
     </div>
   </div>
@@ -62,6 +74,9 @@
     crossorigin="anonymous"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"
     integrity="sha384-vtXRMe3mGCbOeY7l30aIg8H9p3GdeSe4IFlP6G8JMa7o7lXvnz3GFKzPxzJdPfGK"
+    crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"
+    integrity="sha384-Dziy8F2VlJQLMShA6FHWNul/veM9bCkRUaLqr199K94ntO5QUrLJBEbYegdSkkqX"
     crossorigin="anonymous"></script>
   <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"
     integrity="sha384-7EyYLQZgWBi67fBtVxw60/OWl1kjsfrPFcaU0pp0nAh+i8FD068QogUvg85Ewy1k"
