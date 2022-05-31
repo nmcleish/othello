@@ -141,6 +141,10 @@ io.on('connection', (socket) => {
                     /* Tell everyone that a new user has joined the chat room  */
                     io.of('/').to(room).emit('join_room_response', response);
                     serverLog('join_room succeeded', JSON.stringify(response));
+
+                    if (room !== "Lobby") {
+                        send_game_update(socket, room, 'initial update');
+                    }
                 }
             }
         });
@@ -463,4 +467,207 @@ io.on('connection', (socket) => {
         io.of('/').to(room).emit('send_chat_message_response', response);
         serverLog('send_chat_message command succeeded', JSON.stringify(response));
     });
+
+    socket.on('play_token', (payload) => {
+        serverLog('server recieved a command', '\'play_token\'', JSON.stringify(payload));
+        if ((typeof payload == 'undefined') || (payload === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'client did not send a payload';
+            socket.emit('play_token_response', response);
+            serverLog('play_token command failed', JSON.stringify(response));
+            return;
+        }
+
+        let player = players[socket.id];
+        if ((typeof player == 'undefined') || (player === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'play_token came from an unregistered player';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        let username = player.username;
+        if ((typeof username == 'undefined') || (username === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'play_token command did not come from a registered username';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        let game_id = player.room;
+        if ((typeof game_id == 'undefined') || (game_id === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'There was no valid game associated with the play_token command';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        let row = payload.row;
+        if ((typeof row == 'undefined') || (row === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'There was no valid row associated with the play_token command';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        let col = payload.column;
+        if ((typeof col == 'undefined') || (col === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'There was no valid column associated with the play_token command';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        let color = payload.color;
+        if ((typeof color == 'undefined') || (color === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'There was no valid color associated with the play_token command';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        let game = games[game_id];
+        if ((typeof game == 'undefined') || (game === null)) {
+            response = {};
+            response.result = 'fail';
+            response.message = 'There was no valid game associated with the play_token command';
+            socket.emit('play_token_response', response);
+            serverLog('play_token failed', JSON.stringify(response));
+            return;
+        }
+
+        /* Handle the command */
+        let response = {
+            result: 'success',
+        };
+        socket.emit('play_token_response', payload);
+
+        /* Execute the move */
+        if (color === 'blue') {
+            game.board[row][col] = 'b';
+            game.whose_turn = 'pink';
+        } else if (color === 'pink') {
+            game.board[row][col] = 'p';
+            game.whose_turn = 'blue';
+        }
+
+        send_game_update(socket, game_id, 'played a token');
+    });
 });
+
+
+/******************************/
+/* Code related to game state */
+
+let games = [];
+
+function create_new_game() {
+    let new_game = {};
+    new_game.player_blue = {};
+    new_game.player_blue.socket = '';
+    new_game.player_blue.username = '';
+    new_game.player_pink = {};
+    new_game.player_pink.socket = '';
+    new_game.player_pink.username = '';
+
+    var d = new Date();
+    new_game.last_move_time = d.getTime();
+
+    new_game.whose_turn = 'blue';
+
+    new_game.board = [
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', 'b', 'p', ' ', ' ', ' '],
+        [' ', ' ', ' ', 'p', 'b', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
+    ];
+
+    return new_game;
+}
+
+function send_game_update(socket, game_id, message) {
+    /* Check to see if a game with game_id exists */
+    if ((typeof games[game_id] == 'undefined') || (games[game_id] === null)) {
+        console.log("No game exists with game_id: " + game_id + ". Making a new game for " + socket.id);
+        games[game_id] = create_new_game();
+    }
+
+    /* Assign this socket a color */
+    io.of('/').to(game_id).allSockets().then((sockets) => {
+
+        const iterator = sockets[Symbol.iterator]();
+        if (sockets.size >= 1) {
+            let first = iterator.next().value;
+            if ((games[game_id].player_blue.socket != first) && (games[game_id].player_pink.socket != first)) {
+                /* Player does not have a color */
+                if ((games[game_id].player_blue.socket === '')) {
+                    /* This player should be blue */
+                    console.log("Blue is assigned to: " + first);
+                    games[game_id].player_blue.socket = first;
+                    games[game_id].player_blue.username = players[first].username;
+                } else if (games[game_id].player_pink.socket === '') {
+                    /* This player should be pink */
+                    console.log("Pink is assigned to: " + first);
+                    games[game_id].player_pink.socket = first;
+                    games[game_id].player_pink.username = players[first].username;
+                } else {
+                    /* This player should be kicked out */
+                    console.log('Kicking ' + first + ' out of game: ' + game_id);
+                    io.in(first).socketsLeave([game_id]);
+                }
+            }
+        }
+
+        if (sockets.size >= 2) {
+            let second = iterator.next().value;
+            if ((games[game_id].player_blue.socket != second) && (games[game_id].player_pink.socket != second)) {
+                /* Player does not have a color */
+                if ((games[game_id].player_blue.socket === '')) {
+                    /* This player should be blue */
+                    console.log("Blue is assigned to: " + second);
+                    games[game_id].player_blue.socket = second;
+                    games[game_id].player_blue.username = players[second].username;
+                } else if (games[game_id].player_pink.socket === '') {
+                    /* This player should be pink */
+                    console.log("Pink is assigned to: " + second);
+                    games[game_id].player_pink.socket = second;
+                    games[game_id].player_pink.username = players[second].username;
+                } else {
+                    /* This player should be kicked out */
+                    console.log('Kicking ' + second + ' out of game: ' + game_id);
+                    io.in(second).socketsLeave([game_id]);
+                }
+            }
+        }
+
+        /* Send game update */
+        let payload = {
+            result: 'success',
+            game_id: game_id,
+            game: games[game_id],
+            message: message
+        }
+        io.of('/').to(game_id).emit('game_update', payload);
+
+    })
+
+    /* Check if game is over */
+
+}

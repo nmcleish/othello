@@ -181,7 +181,7 @@ socket.on('join_room_response', (payload) => {
     nodeA.show('fade', 1000);
 
     /* Announcing in the chat that someone has arrived */
-    let newHTML = '<p class=\'join_room_response\'>' + payload.username + ' joined the ' + payload.room + '. (There are ' + payload.count + ' users in this room)</p>';
+    let newHTML = '<p class=\'join_room_response\'>' + payload.username + ' joined the chatroom. (There are ' + payload.count + ' users in this room)</p>';
     let newNode = $(newHTML);
     newNode.hide();
     $('#messages').prepend(newNode);
@@ -237,8 +237,126 @@ socket.on('send_chat_message_response', (payload) => {
     newNode.show('fade', 500);
 })
 
+let old_board = [
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?'],
+    ['?', '?', '?', '?', '?', '?', '?', '?']
+];
 
-/* Request to joing the chatroom*/
+let my_color = '';
+
+socket.on('game_update', (payload) => {
+    if ((typeof payload == 'undefined') || (payload === null)) {
+        console.log('Server did not send a payload');
+        return;
+    }
+    if (payload.result === 'fail') {
+        console.log(payload.message);
+        return;
+    }
+
+    let board = payload.game.board;
+    if ((typeof board == 'undefined') || (board === null)) {
+        console.log('Server did not send a valid board to display');
+        return;
+    }
+
+    /* Update my color */
+    if (socket.id === payload.game.player_blue.socket) {
+        my_color = 'blue';
+    } else if (socket.id === payload.game.player_pink.socket) {
+        my_color = 'pink';
+    } else {
+        window.location.href = 'lobby.html?username=' + username;
+        return;
+    }
+
+    $('#my_color').html('<h3 id="my_color"> I am ' + my_color + '</h3>');
+
+    /* Animate changes to the board */
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            /* Check to see if the server changed any spaces on the board */
+            if (old_board[row][col] !== board[row][col]) {
+                let graphic = '';
+                let altTag = '';
+
+                if ((old_board[row][col] === '?') && (board[row][col] === ' ')) {
+                    graphic = 'empty.gif';
+                    altTag = 'empty space';
+                } else if ((old_board[row][col] === '?') && (board[row][col] === 'b')) {
+                    graphic = 'empty_to_blue.gif';
+                    altTag = 'blue token';
+                } else if ((old_board[row][col] === '?') && (board[row][col] === 'p')) {
+                    graphic = 'empty_to_pink.gif';
+                    altTag = 'pink token';
+                } else if ((old_board[row][col] === ' ') && (board[row][col] === 'b')) {
+                    graphic = 'empty_to_blue.gif';
+                    altTag = 'blue token';
+                } else if ((old_board[row][col] === ' ') && (board[row][col] === 'p')) {
+                    graphic = 'empty_to_pink.gif';
+                    altTag = 'pink token';
+                } else if ((old_board[row][col] === 'b') && (board[row][col] === ' ')) {
+                    graphic = 'blue_to_empty.gif';
+                    altTag = 'empty space';
+                } else if ((old_board[row][col] === 'p') && (board[row][col] === ' ')) {
+                    graphic = 'pink_to_empty.gif';
+                    altTag = 'empty space';
+                } else if ((old_board[row][col] === 'b') && (board[row][col] === 'p')) {
+                    graphic = 'blue_to_pink.gif';
+                    altTag = 'pink token';
+                } else if ((old_board[row][col] === 'p') && (board[row][col] === 'b')) {
+                    graphic = 'pink_to_blue.gif';
+                    altTag = 'blue token';
+                } else {
+                    graphic = 'error.gif';
+                    altTag = 'error';
+                }
+                const t = Date.now();
+                $('#' + row + '_' + col).html('<img class="img-fluid" src="assets/images/' + graphic + '?time=' + t + '" alt="' + altTag + '" />');
+
+                $('#' + row + '_' + col).off('click');
+
+                if (board[row][col] === ' ') {
+                    $('#' + row + '_' + col).addClass('hovered_over');
+                    $('#' + row + '_' + col).click(((r, c) => {
+                        return (() => {
+                            let payload = {
+                                row: r,
+                                column: c,
+                                color: my_color
+                            };
+                            console.log('**** Client log message, sending \'play_token\' command: ' + JSON.stringify(payload));
+                            socket.emit('play_token', payload);
+                        });
+                    })(row, col));
+                } else {
+                    $('#' + row + '_' + col).removeClass('hovered_over');
+                }
+            }
+        }
+    }
+    old_board = board;
+})
+
+socket.on('play_token_response', (payload) => {
+    if ((typeof payload == 'undefined') || (payload === null)) {
+        console.log('Server did not send a payload');
+        return;
+    }
+    if (payload.result === 'fail') {
+        console.log(payload.message);
+        return;
+    }
+})
+
+
+/* Request to join the chatroom */
 $(() => {
     let request = {};
     request.room = chatRoom;
