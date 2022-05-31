@@ -28,11 +28,111 @@ socket.on('log', function (array) {
     console.log.apply(console, array);
 });
 
-function makeInviteButton() {
+function makeInviteButton(socket_id) {
     let newHTML = "<button type='button' class='btn btn-outline-primary'>Invite</button>";
+    let newNode = $(newHTML);
+    newNode.click(() => {
+        let payload = {
+            requested_user: socket_id
+        }
+        console.log('**** Client log message, sending \'invite\' command: ' + JSON.stringify(payload));
+        socket.emit('invite', payload);
+    }
+    );
+    return newNode;
+}
+
+function makeInvitedButton(socket_id) {
+    let newHTML = "<button type='button' class='btn btn-primary'>Invited</button>";
+    let newNode = $(newHTML);
+    newNode.click(() => {
+        let payload = {
+            requested_user: socket_id
+        }
+        console.log('**** Client log message, sending \'uninvite\' command: ' + JSON.stringify(payload));
+        socket.emit('uninvite', payload);
+    }
+    );
+    return newNode;
+}
+
+function makePlayButton(socket_id) {
+    let newHTML = "<button type='button' class='btn btn-success'>Play</button>";
+    let newNode = $(newHTML);
+    newNode.click(() => {
+        let payload = {
+            requested_user: socket_id
+        }
+        console.log('**** Client log message, sending \'game_start\' command: ' + JSON.stringify(payload));
+        socket.emit('game_start', payload);
+    }
+    );
+    return newNode;
+}
+
+function makeStartGameButton() {
+    let newHTML = "<button type='button' class='btn btn-danger'>Starting Game</button>";
     let newNode = $(newHTML);
     return newNode;
 }
+
+socket.on('invite_response', (payload) => {
+    if ((typeof payload == 'undefined') || (payload === null)) {
+        console.log('Server did not send a payload');
+        return;
+    }
+    if (payload.result === 'fail') {
+        console.log(payload.message);
+        return;
+    }
+
+    let newNode = makeInvitedButton(payload.socket_id);
+    $('.socket_' + payload.socket_id + ' button').replaceWith(newNode);
+})
+
+socket.on('invited', (payload) => {
+    if ((typeof payload == 'undefined') || (payload === null)) {
+        console.log('Server did not send a payload');
+        return;
+    }
+    if (payload.result === 'fail') {
+        console.log(payload.message);
+        return;
+    }
+
+    let newNode = makePlayButton(payload.socket_id);
+    $('.socket_' + payload.socket_id + ' button').replaceWith(newNode);
+})
+
+socket.on('uninvited', (payload) => {
+    if ((typeof payload == 'undefined') || (payload === null)) {
+        console.log('Server did not send a payload');
+        return;
+    }
+    if (payload.result === 'fail') {
+        console.log(payload.message);
+        return;
+    }
+
+    let newNode = makeInviteButton(payload.socket_id);
+    $('.socket_' + payload.socket_id + ' button').replaceWith(newNode);
+})
+
+socket.on('game_start_response', (payload) => {
+    if ((typeof payload == 'undefined') || (payload === null)) {
+        console.log('Server did not send a payload');
+        return;
+    }
+    if (payload.result === 'fail') {
+        console.log(payload.message);
+        return;
+    }
+
+    let newNode = makeStartGameButton();
+    $('.socket_' + payload.socket_id + ' button').replaceWith(newNode);
+    /* Jump to the game page */
+    window.location.href = 'game.html?username=' + username + '&game_id=' + payload.game_id;
+})
 
 socket.on('join_room_response', (payload) => {
     if ((typeof payload == 'undefined') || (payload === null)) {
@@ -71,7 +171,7 @@ socket.on('join_room_response', (payload) => {
     nodeC.addClass("col");
     nodeC.addClass("text-start");
     nodeC.addClass("socket_" + payload.socket_id);
-    let buttonC = makeInviteButton();
+    let buttonC = makeInviteButton(payload.socket_id);
     nodeC.append(buttonC);
 
     nodeA.append(nodeB);
@@ -99,7 +199,6 @@ socket.on('player_disconnected', (payload) => {
     }
 
     let domElements = $('.socket_' + payload.socket_id);
-    console.log(payload.socket_id)
     if (domElements.length !== 0) {
         domElements.hide("fade", 500);
     }
