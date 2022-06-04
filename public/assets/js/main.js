@@ -379,6 +379,10 @@ socket.on('game_update', (payload) => {
             let total = minutes * 60 + seconds;
             if (total > 100) {
                 total = 100;
+            } 
+            if (total < 0) {
+                total = 0;
+                last_time = d.getTime();
             }
             $('#elapsed').css('width', total + '%').attr('arie-valuenow', total);
 
