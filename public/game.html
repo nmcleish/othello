@@ -15,7 +15,7 @@
 
 <body>
   <div class="container-fluid">
-    <div class="row m-4 headerrow">
+    <div class="row m-4 headerrow rounded">
       <div class="col text-center">
         <h3 id="gameTitle">Reversi</h3>
       </div>
@@ -46,9 +46,9 @@
         <div class="row align-items-start justify-content-center">
           <div class="col-md-8 table-responsive">
 
-            <div class="progress">
-              <div id="elapsed" class="progress-bar progress-bar-animated progress-bar-striped"
-                roles="progressbar" style="width:0%;" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress" style="height: 20px;">
+              <div id="elapsed" class="progress-bar progress-bar-animated progress-bar-striped" roles="progressbar"
+                style="width:0%; background-color: #749eff;" aria-valuemin="0" aria-valuemax="100">
               </div>
 
             </div>
@@ -135,7 +135,7 @@
               </tr>
             </table>
           </div>
-          <div class="col-md-4" id="messagePane">
+          <div class="col-md-4 rounded" id="messagePane">
             <div>
               <h4>Messages</h4>
             </div>

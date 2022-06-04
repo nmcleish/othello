@@ -445,7 +445,7 @@ $(() => {
     socket.emit('join_room', request);
 
     $('#lobbyTitle').html(username + "'s Lobby");
-    $('#quit').html('<a href="lobby.html?username=' + username + '" class="btn btn-lg btn-danger" role="button">Quit</a>');
+    $('#quit').html('<a href="lobby.html?username=' + username + '" class="btn btn-lg" role="button" style="width:20%; background-color: #e57ea0;">Quit</a>');
 
 
     $('#chatMessage').keypress(function (e) {
