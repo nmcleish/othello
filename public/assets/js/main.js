@@ -276,7 +276,22 @@ socket.on('game_update', (payload) => {
         return;
     }
 
-    $('#my_color').html('<h3 id="my_color"> I am ' + my_color + '</h3>');
+
+    if (my_color === 'blue') {
+        $('#my_color').html('<h3 id="my_color"> I am blue</h3>');
+    } else if (my_color === 'pink') {
+        $('#my_color').html('<h3 id="my_color"> I am pink</h3>');
+    } else {
+        $('#my_color').html('<h3 id="my_color"> I don\'t know what color I am</h3>');
+    }
+
+    if (payload.game.whose_turn === 'blue') {
+        $('#my_color').append('<h4 id="my_color"> It is blue\'s turn</h4>');
+    } else if (payload.game.whose_turn === 'pink') {
+        $('#my_color').append('<h4 id="my_color"> It is pink\'s turn</h4>');
+    } else {
+        $('#my_color').append('<h4 id="my_color"> ERROR: I don\'t know whose turn it is.</h4>');
+    }
 
     let bluesum = 0;
     let pinksum = 0;
@@ -328,9 +343,13 @@ socket.on('game_update', (payload) => {
                 const t = Date.now();
                 $('#' + row + '_' + col).html('<img class="img-fluid" src="assets/images/' + graphic + '?time=' + t + '" alt="' + altTag + '" />');
 
-                $('#' + row + '_' + col).off('click');
+            }
+            /* Set up interactivity */
+            $('#' + row + '_' + col).off('click');
+            $('#' + row + '_' + col).removeClass('hovered_over');
 
-                if (board[row][col] === ' ') {
+            if (payload.game.whose_turn === my_color) {
+                if (payload.game.legal_moves[row][col] === my_color.substring(0, 1)) {
                     $('#' + row + '_' + col).addClass('hovered_over');
                     $('#' + row + '_' + col).click(((r, c) => {
                         return (() => {
@@ -343,8 +362,6 @@ socket.on('game_update', (payload) => {
                             socket.emit('play_token', payload);
                         });
                     })(row, col));
-                } else {
-                    $('#' + row + '_' + col).removeClass('hovered_over');
                 }
             }
         }
@@ -372,14 +389,15 @@ socket.on('game_over', (payload) => {
     }
     if (payload.result === 'fail') {
         console.log(payload.message);
+        alert(payload.message);
         return;
     }
 
     /* Announce with a button to the lobby */
     let nodeA = $('<div id="game_over"></div>');
     let nodeB = $('<h1>Game Over</h1>');
-    let nodeC = $('<h2>' +payload.winner+' won!</h2>');
-    let nodeD = $('<a href="lobby.html?username='+username+'" class="btn btn-lg btn-success" role="button">Return to lobby</a>');
+    let nodeC = $('<h2>' + payload.winner + ' won!</h2>');
+    let nodeD = $('<a href="lobby.html?username=' + username + '" class="btn btn-lg btn-success" role="button">Return to lobby</a>');
     nodeA.append(nodeB);
     nodeA.append(nodeC);
     nodeA.append(nodeD);
@@ -398,7 +416,7 @@ $(() => {
     socket.emit('join_room', request);
 
     $('#lobbyTitle').html(username + "'s Lobby");
-    $('#quit').html('<a href="lobby.html?username='+username+'" class="btn btn-lg btn-danger" role="button">Quit</a>');
+    $('#quit').html('<a href="lobby.html?username=' + username + '" class="btn btn-lg btn-danger" role="button">Quit</a>');
 
 
     $('#chatMessage').keypress(function (e) {
