@@ -560,7 +560,7 @@ io.on('connection', (socket) => {
             return;
         }
 
-        /* Make sure the current plau is by the expected player */
+        /* Make sure the current play is by the expected player */
         if (((game.whose_turn === 'blue') && (game.player_blue.socket != socket.id)) ||
             ((game.whose_turn === 'pink') && (game.player_pink.socket != socket.id))) {
             let response = {
@@ -581,10 +581,12 @@ io.on('connection', (socket) => {
         /* Execute the move */
         if (color === 'blue') {
             game.board[row][col] = 'b';
+            flip_tokens('b', row, col, game.board);
             game.whose_turn = 'pink';
             game.legal_moves = calculate_legal_moves('p', game.board);
         } else if (color === 'pink') {
             game.board[row][col] = 'p';
+            flip_tokens('p', row, col, game.board);
             game.whose_turn = 'blue';
             game.legal_moves = calculate_legal_moves('b', game.board);
         }
@@ -719,6 +721,44 @@ function calculate_legal_moves(who, board) {
         }
     }
     return legal_moves;
+}
+
+function flip_line(who, dr, dc, r, c, board) {
+
+    if ((r + dr < 0) || (r + dr > 7)) {
+        return false;
+    }
+    if ((c + dc < 0) || (c + dc > 7)) {
+        return false;
+    }
+
+    if (board[r + dr][c + dc] === ' ') {
+        return false;
+    }
+
+    if (board[r + dr][c + dc] === who) {
+        return true;
+    } else {
+        if (flip_line(who, dr, dc, r + dr, c + dc, board)) {
+            board[r + dr][c + dc] = who;
+            return true;
+        } else {
+            false;
+        }
+    }
+}
+
+function flip_tokens(who, row, col, board) {
+    flip_line(who, -1, -1, row, col, board);
+    flip_line(who, -1, 0, row, col, board);
+    flip_line(who, -1, 1, row, col, board);
+
+    flip_line(who, 0, -1, row, col, board);
+    flip_line(who, 0, 1, row, col, board);
+
+    flip_line(who, 1, -1, row, col, board);
+    flip_line(who, 1, 0, row, col, board);
+    flip_line(who, 1, 1, row, col, board);
 }
 
 function send_game_update(socket, game_id, message) {
