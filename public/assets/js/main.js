@@ -163,9 +163,9 @@ socket.on('join_room_response', (payload) => {
 
     let nodeB = $("<div></div>");
     nodeB.addClass("col");
-    nodeB.addClass("text-end");
+    nodeB.addClass("text-start");
     nodeB.addClass("socket_" + payload.socket_id);
-    nodeB.append('<h4>' + payload.username + '</h4>');
+    nodeB.append('<h4 style="font-family: \'Poppins\', sans-serif; font-size: medium;">' + payload.username + '</h4>');
 
     let nodeC = $("<div></div>");
     nodeC.addClass("col");
@@ -230,7 +230,7 @@ socket.on('send_chat_message_response', (payload) => {
         return;
     }
 
-    let newHTML = '<p class=\'chat_message\'><b>' + payload.username + '</b>: ' + payload.message + '</p>';
+    let newHTML = '<p class=\'chat_message\' style="font-family: \'Poppins\', sans-serif;"><b>' + payload.username + '</b>: ' + payload.message + '</p>';
     let newNode = $(newHTML);
     newNode.hide();
     $('#messages').prepend(newNode);
@@ -280,17 +280,17 @@ socket.on('game_update', (payload) => {
 
 
     if (my_color === 'blue') {
-        $('#my_color').html('<h3 id="my_color"> I am blue</h3>');
+        $('#my_color').html('<h3 id="my_color">' + username + ', your color is blue.</h3>');
     } else if (my_color === 'pink') {
-        $('#my_color').html('<h3 id="my_color"> I am pink</h3>');
+        $('#my_color').html('<h3 id="my_color">' + username + ', your color is pink.</h3>');
     } else {
-        $('#my_color').html('<h3 id="my_color"> I don\'t know what color I am</h3>');
+        $('#my_color').html('<h3 id="my_color">' + username + ', we don\'t know what color you are</h3>');
     }
 
     if (payload.game.whose_turn === 'blue') {
-        $('#my_color').append('<h4 id="my_color"> It is blue\'s turn</h4>');
+        $('#my_color').append('<h4 id="my_color"> It is blue\'s turn.</h4>');
     } else if (payload.game.whose_turn === 'pink') {
-        $('#my_color').append('<h4 id="my_color"> It is pink\'s turn</h4>');
+        $('#my_color').append('<h4 id="my_color"> It is pink\'s turn.</h4>');
     } else {
         $('#my_color').append('<h4 id="my_color"> ERROR: I don\'t know whose turn it is.</h4>');
     }
@@ -379,7 +379,7 @@ socket.on('game_update', (payload) => {
             let total = minutes * 60 + seconds;
             if (total > 100) {
                 total = 100;
-            } 
+            }
             if (total < 0) {
                 total = 0;
                 last_time = d.getTime();
